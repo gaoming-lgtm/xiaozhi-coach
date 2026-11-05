@@ -1,0 +1,25 @@
+{
+  "name": "xiaozhi-coach",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "小智师傅 — 本地运行的装机陪练：拍照看接线、3D 示意每一步、语音一步步带你装。",
+  "license": "MIT",
+  "keywords": [
+    "xiaozhi",
+    "esp32-s3",
+    "hardware",
+    "assembly",
+    "three.js",
+    "ai-tutor",
+    "local-first",
+    "windows"
+  ],
+  "scripts": {
+    "start": "node server.mjs",
+    "setup": "powershell -ExecutionPolicy Bypass -File setup.ps1"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

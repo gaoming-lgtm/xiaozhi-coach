@@ -1,0 +1,985 @@
+{
+  "id": "xiaozhi-breadboard-oled",
+  "name": "小智 · 面包板版（0.96 OLED · 零焊接）",
+  "version": "1.0.0",
+  "updated": "2026-11-01",
+  "_note": "接线数据以官方文档为准，模型只能引用、不能改写。官方来源：https://xiaozhi.me/xz-docs/docs/tutorial-basics/esp32-s3-bread-board-diy-wiring/",
+  "source": {
+    "official_wiring": "https://xiaozhi.me/xz-docs/docs/tutorial-basics/esp32-s3-bread-board-diy-wiring/",
+    "firmware_repo": "https://github.com/78/xiaozhi-esp32",
+    "console": "https://xiaozhi.me"
+  },
+  "board": {
+    "model": "ESP32-S3 核心板 N16R8（嘉顺 / HW678 V0.0.0）",
+    "mcu": "双核 Xtensa LX7",
+    "flash": "16MB",
+    "psram": "8MB",
+    "usb_serial": "CH343P",
+    "usb_ports": 2,
+    "size_mm": [
+      57,
+      28
+    ],
+    "buttons": [
+      "RST",
+      "BOOT"
+    ],
+    "led": "板载 WS2812 RGB",
+    "firmware_board_type": "bread-compact-wifi (Simplex 模式)",
+    "traps": [
+      "有 2 个 Type-C 口：左边「ESP32-S3 直通 USB&OTG」，右边「USB 转串口 CH343P」。刷固件用右边那个。",
+      "5Vin 默认是输入脚，不出 5V。要出 5V 必须短接背面 IN-OUT 跳线（0 欧电阻）。本方案不需要。",
+      "RGB 灯不亮，先看背面 RGB 两个焊点是否连通。"
+    ]
+  },
+  "safety": {
+    "rules": [
+      "任何上电动作之前，先用万用表蜂鸣档测 3V3 与 GND 是否短路。官方文档作者就是因为面包板电源轨短路，烧坏过两块开发板的 USB 口。",
+      "INMP441 和 OLED 只能接 3.3V，接 5V 直接烧。",
+      "MAX98357A 的 VIN 接 3.3V（官方默认），不是 5V。",
+      "接线时 USB 必须拔掉。"
+    ]
+  },
+  "parts": [
+    {
+      "id": "esp32s3",
+      "name": "ESP32-S3 核心板 N16R8",
+      "qty": 1,
+      "visual": {
+        "kind": "board",
+        "color": "#1a1a22",
+        "size": [
+          57,
+          28,
+          6
+        ],
+        "detail": "顶部黑色屏蔽罩 + 两排排针 + 两个 Type-C"
+      },
+      "note": "排针已焊"
+    },
+    {
+      "id": "inmp441",
+      "name": "INMP441 麦克风模块",
+      "qty": 1,
+      "visual": {
+        "kind": "module",
+        "color": "#2f6b57",
+        "size": [
+          15,
+          12,
+          3
+        ],
+        "detail": "圆形金圈咪头 + 6 针"
+      },
+      "note": "排针已焊，引脚：VDD GND L/R WS SCK SD"
+    },
+    {
+      "id": "max98357",
+      "name": "MAX98357A 功放模块",
+      "qty": 1,
+      "visual": {
+        "kind": "module",
+        "color": "#3b3b6b",
+        "size": [
+          20,
+          15,
+          3
+        ],
+        "detail": "紫色小板 + 7 针 + 喇叭插座"
+      },
+      "note": "排针已焊，引脚：VIN GND SD GAIN DIN BCLK LRC"
+    },
+    {
+      "id": "speaker",
+      "name": "3W 8Ω 喇叭",
+      "qty": 1,
+      "visual": {
+        "kind": "speaker",
+        "color": "#222222",
+        "size": [
+          30,
+          30,
+          12
+        ],
+        "detail": "圆形喇叭 + 红黑两线 + 2P 插头"
+      },
+      "note": "插端子，不焊接"
+    },
+    {
+      "id": "oled",
+      "name": "0.96″ OLED（SSD1306）",
+      "qty": 1,
+      "visual": {
+        "kind": "display",
+        "color": "#111827",
+        "size": [
+          27,
+          27,
+          4
+        ],
+        "detail": "黑色小板 + 4 针 VCC GND SCL SDA"
+      },
+      "note": "白光，4 针 IIC"
+    },
+    {
+      "id": "breadboard",
+      "name": "830 孔面包板",
+      "qty": 1,
+      "visual": {
+        "kind": "breadboard",
+        "color": "#f5f5f0",
+        "size": [
+          165,
+          55,
+          10
+        ],
+        "detail": "中间凹槽 + 上下电源轨 + 红蓝线"
+      },
+      "note": "上下两条电源轨默认不相通，要自己接"
+    },
+    {
+      "id": "wires",
+      "name": "杜邦线 120 根",
+      "qty": 120,
+      "visual": {
+        "kind": "wire",
+        "color": "#888888",
+        "detail": "母母 / 公公 / 公母，21cm"
+      },
+      "note": "配色规范：红/棕=VCC，灰/黑=GND，橙/咖啡=信号"
+    },
+    {
+      "id": "multimeter",
+      "name": "DT830B 万用表",
+      "qty": 1,
+      "visual": {
+        "kind": "tool",
+        "detail": "黑色方表 + 红黑表笔"
+      },
+      "note": "第二步就要用：蜂鸣档测短路"
+    }
+  ],
+  "wiring": [
+    {
+      "id": "w-mic-vdd",
+      "signal": "INMP441 VDD",
+      "from": [
+        "esp32s3",
+        "3V3"
+      ],
+      "to": [
+        "inmp441",
+        "VDD"
+      ],
+      "color": "红",
+      "note": "只能 3.3V"
+    },
+    {
+      "id": "w-mic-gnd",
+      "signal": "INMP441 GND",
+      "from": [
+        "esp32s3",
+        "GND"
+      ],
+      "to": [
+        "inmp441",
+        "GND"
+      ],
+      "color": "黑",
+      "note": ""
+    },
+    {
+      "id": "w-mic-lr",
+      "signal": "INMP441 L/R",
+      "from": [
+        "esp32s3",
+        "GND"
+      ],
+      "to": [
+        "inmp441",
+        "L/R"
+      ],
+      "color": "黑",
+      "note": "接地 = 左声道"
+    },
+    {
+      "id": "w-mic-ws",
+      "signal": "INMP441 WS",
+      "from": [
+        "esp32s3",
+        "GPIO4"
+      ],
+      "to": [
+        "inmp441",
+        "WS"
+      ],
+      "color": "橙",
+      "note": "字选择"
+    },
+    {
+      "id": "w-mic-sck",
+      "signal": "INMP441 SCK",
+      "from": [
+        "esp32s3",
+        "GPIO5"
+      ],
+      "to": [
+        "inmp441",
+        "SCK"
+      ],
+      "color": "黄",
+      "note": "位时钟"
+    },
+    {
+      "id": "w-mic-sd",
+      "signal": "INMP441 SD",
+      "from": [
+        "esp32s3",
+        "GPIO6"
+      ],
+      "to": [
+        "inmp441",
+        "SD"
+      ],
+      "color": "蓝",
+      "note": "数据输出"
+    },
+    {
+      "id": "w-amp-vin",
+      "signal": "MAX98357A VIN",
+      "from": [
+        "esp32s3",
+        "3V3"
+      ],
+      "to": [
+        "max98357",
+        "VIN"
+      ],
+      "color": "红",
+      "note": "官方默认 3.3V；接 5V 需先短接背面 IN-OUT"
+    },
+    {
+      "id": "w-amp-gnd",
+      "signal": "MAX98357A GND",
+      "from": [
+        "esp32s3",
+        "GND"
+      ],
+      "to": [
+        "max98357",
+        "GND"
+      ],
+      "color": "黑",
+      "note": ""
+    },
+    {
+      "id": "w-amp-sd",
+      "signal": "MAX98357A SD",
+      "from": [
+        "esp32s3",
+        "3V3"
+      ],
+      "to": [
+        "max98357",
+        "SD"
+      ],
+      "color": "红",
+      "note": "拉高 = 常开，不关机"
+    },
+    {
+      "id": "w-amp-gain",
+      "signal": "MAX98357A GAIN",
+      "from": [
+        "esp32s3",
+        "GND"
+      ],
+      "to": [
+        "max98357",
+        "GAIN"
+      ],
+      "color": "黑",
+      "note": "接地 = 低增益"
+    },
+    {
+      "id": "w-amp-din",
+      "signal": "MAX98357A DIN",
+      "from": [
+        "esp32s3",
+        "GPIO7"
+      ],
+      "to": [
+        "max98357",
+        "DIN"
+      ],
+      "color": "橙",
+      "note": "数字信号"
+    },
+    {
+      "id": "w-amp-bclk",
+      "signal": "MAX98357A BCLK",
+      "from": [
+        "esp32s3",
+        "GPIO15"
+      ],
+      "to": [
+        "max98357",
+        "BCLK"
+      ],
+      "color": "黄",
+      "note": "位时钟"
+    },
+    {
+      "id": "w-amp-lrc",
+      "signal": "MAX98357A LRC",
+      "from": [
+        "esp32s3",
+        "GPIO16"
+      ],
+      "to": [
+        "max98357",
+        "LRC"
+      ],
+      "color": "蓝",
+      "note": "左右时钟"
+    },
+    {
+      "id": "w-spk",
+      "signal": "喇叭",
+      "from": [
+        "max98357",
+        "音频+"
+      ],
+      "to": [
+        "speaker",
+        "+"
+      ],
+      "color": "红",
+      "note": "红线接 +，插 2P 端子"
+    },
+    {
+      "id": "w-oled-vcc",
+      "signal": "OLED VCC",
+      "from": [
+        "esp32s3",
+        "3V3"
+      ],
+      "to": [
+        "oled",
+        "VCC"
+      ],
+      "color": "红",
+      "note": "只能 3.3V"
+    },
+    {
+      "id": "w-oled-gnd",
+      "signal": "OLED GND",
+      "from": [
+        "esp32s3",
+        "GND"
+      ],
+      "to": [
+        "oled",
+        "GND"
+      ],
+      "color": "黑",
+      "note": ""
+    },
+    {
+      "id": "w-oled-sda",
+      "signal": "OLED SDA",
+      "from": [
+        "esp32s3",
+        "GPIO41"
+      ],
+      "to": [
+        "oled",
+        "SDA"
+      ],
+      "color": "绿",
+      "note": "板上丝印可能写 SDA"
+    },
+    {
+      "id": "w-oled-scl",
+      "signal": "OLED SCL",
+      "from": [
+        "esp32s3",
+        "GPIO42"
+      ],
+      "to": [
+        "oled",
+        "SCL"
+      ],
+      "color": "黄",
+      "note": "板上丝印可能写 SCK/SCL"
+    }
+  ],
+  "steps": [
+    {
+      "id": "s01",
+      "title": "清点零件",
+      "goal": "把 8 样零件摊开，确认齐了（镊子和螺丝刀是辅助工具，不算）",
+      "why": "少一件，后面每一步都会卡在互相猜",
+      "parts": [
+        "esp32s3",
+        "inmp441",
+        "max98357",
+        "speaker",
+        "oled",
+        "breadboard",
+        "wires",
+        "multimeter"
+      ],
+      "do": [
+        "全部倒在桌上摊平",
+        "对照清单数一遍"
+      ],
+      "check": "照片里 8 样零件齐全，每样都完整露出来",
+      "safety": "info"
+    },
+    {
+      "id": "s02",
+      "title": "认识板子（拔掉 USB）",
+      "goal": "找到 3V3、GND、GPIO4、5、6、7、15、16、41、42 在哪",
+      "why": "这块板有 36 个 IO，认错一个脚后面全错",
+      "parts": [
+        "esp32s3"
+      ],
+      "do": [
+        "把板子平放，两个 Type-C 朝向自己",
+        "对着丝印找 3V3 和 GND 的位置",
+        "找到 GPIO4~7 这一组"
+      ],
+      "check": "照片能看清丝印，并指着 3V3 的位置",
+      "pitfalls": [
+        "左边的 Type-C 是直通 USB，右边才是串口，刷固件用右边"
+      ],
+      "safety": "info"
+    },
+    {
+      "id": "s03",
+      "title": "上电前测短路",
+      "goal": "确认 3V3 和 GND 之间没有短路",
+      "why": "官方文档作者就是因为面包板电源轨短路，烧坏过两块板子的 USB 口",
+      "parts": [
+        "multimeter",
+        "breadboard"
+      ],
+      "do": [
+        "万用表转到蜂鸣档（二极管档）",
+        "一根表笔点面包板 3V3 轨，另一根点 GND 轨",
+        "不响 = 正常；响 = 立刻停下"
+      ],
+      "check": "拍万用表读数 / 或者拍你测的位置，并且说一声响没响",
+      "pitfalls": [
+        "别用电阻档，就用蜂鸣档"
+      ],
+      "safety": "danger"
+    },
+    {
+      "id": "s04",
+      "title": "铺面包板电源轨",
+      "goal": "把 3V3 和 GND 引到面包板上下两条轨",
+      "why": "面包板的红蓝电源轨默认不通电，不接就是全板没电——十个人九个卡这",
+      "parts": [
+        "breadboard",
+        "wires",
+        "esp32s3"
+      ],
+      "do": [
+        "红线：板子 3V3 → 面包板上排 + 轨",
+        "黑线：板子 GND → 面包板上排 − 轨",
+        "再引一根到下排"
+      ],
+      "check": "照片里能看出上排 + 是红线、− 是黑线，两根都从板子出发",
+      "pitfalls": [
+        "上排和下排是分开的两条轨，要各引一次"
+      ],
+      "safety": "info"
+    },
+    {
+      "id": "s05",
+      "title": "插上 ESP32-S3",
+      "goal": "把板子跨在面包板凹槽上插好",
+      "why": "板子必须跨槽，两排脚不能插在同一行",
+      "parts": [
+        "esp32s3",
+        "breadboard"
+      ],
+      "do": [
+        "板子骑在中间凹槽上",
+        "两排排针分别插进左右两侧",
+        "轻轻压到底"
+      ],
+      "check": "照片里板子横跨凹槽，两排脚各在一边",
+      "pitfalls": [
+        "不能斜插，不能只插一半"
+      ],
+      "safety": "info"
+    },
+    {
+      "id": "s06",
+      "title": "接麦克风电源",
+      "goal": "INMP441 的 VDD、GND、L/R 接好",
+      "why": "L/R 接地才出左声道，浮空会没声音",
+      "parts": [
+        "inmp441",
+        "wires"
+      ],
+      "wiring": [
+        "w-mic-vdd",
+        "w-mic-gnd",
+        "w-mic-lr"
+      ],
+      "do": [
+        "VDD → 3V3（红）",
+        "GND → GND（黑）",
+        "L/R → GND（黑，和 GND 同一根短接）"
+      ],
+      "check": "照片能看清模块上三根线的位置和颜色",
+      "pitfalls": [
+        "VDD 千万不能接 5V，会烧咪头"
+      ],
+      "safety": "danger"
+    },
+    {
+      "id": "s07",
+      "title": "接麦克风信号线",
+      "goal": "WS、SCK、SD 三根线接到 GPIO4/5/6",
+      "why": "这三根是 I2S 的声音数据，接反就是没声音或者全是噪音",
+      "parts": [
+        "inmp441",
+        "wires"
+      ],
+      "wiring": [
+        "w-mic-ws",
+        "w-mic-sck",
+        "w-mic-sd"
+      ],
+      "do": [
+        "WS → GPIO4",
+        "SCK → GPIO5",
+        "SD → GPIO6"
+      ],
+      "check": "照片能看清每根线落到板子哪个脚",
+      "pitfalls": [
+        "WS 和 SCK 接反是最常见的错误，现象是只有电流声"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s08",
+      "title": "接功放电源",
+      "goal": "MAX98357A 的 VIN、GND、SD、GAIN 接好",
+      "why": "SD 拉高才不关机，GAIN 接地是低增益",
+      "parts": [
+        "max98357",
+        "wires"
+      ],
+      "wiring": [
+        "w-amp-vin",
+        "w-amp-gnd",
+        "w-amp-sd",
+        "w-amp-gain"
+      ],
+      "do": [
+        "VIN → 3V3（红）",
+        "GND → GND（黑）",
+        "SD → 3V3（红）",
+        "GAIN → GND（黑）"
+      ],
+      "check": "照片能看清四根线，尤其 SD 和 GAIN 没有接反",
+      "pitfalls": [
+        "VIN 接 3.3V 就够了；想更响再考虑短接背面 IN-OUT 用 5V"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s09",
+      "title": "接功放信号线",
+      "goal": "DIN、BCLK、LRC 接到 GPIO7/15/16",
+      "why": "这三根是把声音送到喇叭的路",
+      "parts": [
+        "max98357",
+        "wires"
+      ],
+      "wiring": [
+        "w-amp-din",
+        "w-amp-bclk",
+        "w-amp-lrc"
+      ],
+      "do": [
+        "DIN → GPIO7",
+        "BCLK → GPIO15",
+        "LRC → GPIO16"
+      ],
+      "check": "照片能看清三根线的落点",
+      "pitfalls": [
+        "BCLK 和 LRC 接反 = 只有沙沙声"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s10",
+      "title": "接喇叭",
+      "goal": "红线接音频+，黑线接音频−",
+      "why": "接反不会烧，但相位反了低音会抵消",
+      "parts": [
+        "speaker",
+        "max98357"
+      ],
+      "wiring": [
+        "w-spk"
+      ],
+      "do": [
+        "喇叭的 2P 插头插进功放模块的音频座",
+        "红线对准 +"
+      ],
+      "check": "照片里插头插到底了",
+      "pitfalls": [
+        "别把喇叭直接插到板子的 GPIO 上"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s11",
+      "title": "接 OLED",
+      "goal": "VCC、GND、SDA、SCL 接到 3V3 / GND / GPIO41 / GPIO42",
+      "why": "OLED 用来看配网状态和表情，不是必需品，但接错会拖垮整个 I2C",
+      "parts": [
+        "oled",
+        "wires"
+      ],
+      "wiring": [
+        "w-oled-vcc",
+        "w-oled-gnd",
+        "w-oled-sda",
+        "w-oled-scl"
+      ],
+      "do": [
+        "VCC → 3V3（红）",
+        "GND → GND（黑）",
+        "SDA → GPIO41",
+        "SCL → GPIO42"
+      ],
+      "check": "照片能看清四根线，VCC 没接到 5V",
+      "pitfalls": [
+        "SDA 和 SCL 接反 = 屏幕全黑"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s12",
+      "title": "上电前整体复测",
+      "goal": "再测一次 3V3 与 GND，确认没短路",
+      "why": "接完这么多线，短路概率比空板高得多",
+      "parts": [
+        "multimeter"
+      ],
+      "do": [
+        "万用表蜂鸣档",
+        "测 3V3 轨和 GND 轨",
+        "确认不响"
+      ],
+      "check": "照片拍你测的位置 + 说一声响没响",
+      "safety": "danger"
+    },
+    {
+      "id": "s13",
+      "title": "插 USB，看灯",
+      "goal": "板子上电，PWR 灯亮，RGB 灯亮",
+      "why": "这是第一次上电，最危险也最激动的一步",
+      "parts": [
+        "esp32s3"
+      ],
+      "do": [
+        "数据线插右边那个 Type-C（USB 转串口）",
+        "电脑上等几秒",
+        "看 PWR 灯和 RGB 灯"
+      ],
+      "check": "照片里能看到灯亮着",
+      "pitfalls": [
+        "RGB 不亮但 PWR 亮 → 背面 RGB 焊点没连通",
+        "什么灯都不亮 → 拔掉，立刻停下来找我"
+      ],
+      "safety": "danger"
+    },
+    {
+      "id": "s14",
+      "title": "刷固件",
+      "goal": "把面包板版固件烧进去",
+      "why": "板子是空的，没有固件就什么都不会",
+      "parts": [],
+      "do": [
+        "确认设备管理器里出现 COM 口",
+        "用官方网页刷机工具或 esptool 刷 bread-compact-wifi"
+      ],
+      "check": "截图刷机工具的进度条和最终结果",
+      "pitfalls": [
+        "认不到 COM 口 → 可能缺 CH343 驱动",
+        "刷不进去 → 按住 BOOT 再点 RST 进下载模式"
+      ],
+      "safety": "warn"
+    },
+    {
+      "id": "s15",
+      "title": "配网",
+      "goal": "连上你家 2.4G WiFi",
+      "why": "小智要靠网络跑语音识别和大模型",
+      "parts": [],
+      "do": [
+        "手机连 Xiaozhi-XXXX 热点",
+        "浏览器开 192.168.4.1",
+        "选 2.4G 网络，输密码"
+      ],
+      "check": "拍配网成功的页面",
+      "pitfalls": [
+        "只支持 2.4G，5G 连不上",
+        "iPhone 热点要开「最大兼容性」"
+      ],
+      "safety": "info"
+    },
+    {
+      "id": "s16",
+      "title": "绑定设备",
+      "goal": "在 xiaozhi.me 后台添加设备",
+      "why": "不绑定就只能听到验证码，不能对话",
+      "parts": [],
+      "do": [
+        "说「你好小智」唤醒",
+        "听 6 位验证码",
+        "去 xiaozhi.me 添加设备"
+      ],
+      "check": "拍后台里设备显示已激活",
+      "safety": "info"
+    },
+    {
+      "id": "s17",
+      "title": "第一次对话",
+      "goal": "跟它说句话，听到回应",
+      "why": "到这一步，整条链路才算通",
+      "parts": [],
+      "do": [
+        "说「你好小智」",
+        "等它回应",
+        "问它今天天气"
+      ],
+      "check": "录音或者描述一下：能不能听到、听清不清楚",
+      "pitfalls": [
+        "能听到但全是杂音 → 查 WS/SCK 是否接反",
+        "完全没声 → 查功放 SD/GAIN"
+      ],
+      "safety": "info"
+    }
+  ],
+  "troubleshoot": [
+    {
+      "id": "t01",
+      "symptom": "插上 USB，一点反应都没有（灯不亮）",
+      "causes": [
+        "数据线是纯充电线，没有数据线芯",
+        "插到了左边那个 Type-C（那是直通 USB，不是串口）",
+        "面包板电源轨短路，板子保护了"
+      ],
+      "check": [
+        "换一根确定能传数据的线（比如手机同步线）",
+        "改插右边「USB 转串口」那个口",
+        "拔掉 USB，万用表蜂鸣档测 3V3 与 GND，应该不响"
+      ],
+      "fix": [
+        "线换对了就亮",
+        "如果测出短路，把电源轨的红黑线拔了重接"
+      ]
+    },
+    {
+      "id": "t02",
+      "symptom": "板子灯亮了，但电脑里找不到 COM 口",
+      "causes": [
+        "CH343 驱动没装",
+        "数据线只供电不传数据",
+        "插的是左边那个直通口"
+      ],
+      "check": [
+        "设备管理器 → 端口(COM 和 LPT) 看有没有新设备",
+        "换 USB 口试",
+        "换线试"
+      ],
+      "fix": [
+        "装 WCH CH343 驱动（搜 CH343SER）",
+        "装完拔插一次"
+      ]
+    },
+    {
+      "id": "t03",
+      "symptom": "刷固件一直失败",
+      "causes": [
+        "没进下载模式",
+        "波特率过高",
+        "串口被别的程序占着"
+      ],
+      "check": [
+        "先关掉串口助手/Arduino 等占用 COM 的软件"
+      ],
+      "fix": [
+        "按住 BOOT 不松 → 点一下 RST → 松开 BOOT，再点刷写",
+        "把波特率降到 115200 再试"
+      ]
+    },
+    {
+      "id": "t04",
+      "symptom": "配网连不上，或者一直重启",
+      "causes": [
+        "连的是 5G 网络（只支持 2.4G）",
+        "WiFi 密码错",
+        "信号太弱"
+      ],
+      "check": [
+        "确认你家 WiFi 有 2.4G 频段",
+        "手机热点要开「最大兼容性」"
+      ],
+      "fix": [
+        "重新连 Xiaozhi-XXXX 热点，浏览器开 192.168.4.1 重配"
+      ]
+    },
+    {
+      "id": "t05",
+      "symptom": "能唤醒，但喇叭一点声音都没有",
+      "causes": [
+        "MAX98357A 的 SD 脚没接 3V3（芯片被关断）",
+        "VIN 没电",
+        "喇叭插头没插到底"
+      ],
+      "check": [
+        "万用表测 MAX98357A 的 VIN 对 GND 有没有 3.3V",
+        "SD 脚是不是接在 3V3 上"
+      ],
+      "fix": [
+        "SD 补接到 3V3",
+        "喇叭插头按到底"
+      ]
+    },
+    {
+      "id": "t06",
+      "symptom": "喇叭只有沙沙声、电流声",
+      "causes": [
+        "BCLK 和 LRC 接反了",
+        "地线没共好"
+      ],
+      "check": [
+        "BCLK 应该接 GPIO15，LRC 接 GPIO16"
+      ],
+      "fix": [
+        "把这两根线对调回来"
+      ]
+    },
+    {
+      "id": "t07",
+      "symptom": "它听不见我说话（叫它没反应）",
+      "causes": [
+        "麦克风没供电",
+        "L/R 没接地",
+        "WS 和 SCK 接反",
+        "麦克风焊反了（进声孔朝下）"
+      ],
+      "check": [
+        "测 INMP441 的 VDD 对 GND 是不是 3.3V",
+        "L/R 是不是接到了 GND",
+        "WS→GPIO4，SCK→GPIO5 有没有对调",
+        "看咪头：金圈那面应该朝上"
+      ],
+      "fix": [
+        "按上面逐条对",
+        "麦克风是买来就焊好的，接反了不用自己改，找卖家换"
+      ]
+    },
+    {
+      "id": "t08",
+      "symptom": "声音特别小",
+      "causes": [
+        "GAIN 接了 GND（低增益档）",
+        "功放只吃 3.3V",
+        "喇叭功率小"
+      ],
+      "check": [
+        "看 GAIN 脚接在哪"
+      ],
+      "fix": [
+        "GAIN 改接 VDD，增益从 9dB 提到 15dB",
+        "想更响再考虑把功放 VIN 改 5V（要短接背面 IN-OUT 跳线）"
+      ]
+    },
+    {
+      "id": "t09",
+      "symptom": "说话有回音、啸叫",
+      "causes": [
+        "麦克风离喇叭太近",
+        "音量开太大"
+      ],
+      "check": [
+        "麦克风和喇叭之间有没有隔开"
+      ],
+      "fix": [
+        "把喇叭往远挪，别对着麦克风",
+        "调小音量"
+      ]
+    },
+    {
+      "id": "t10",
+      "symptom": "说两句就断线、重启",
+      "causes": [
+        "供电不够（3W 喇叭峰值把 3V3 拉垮）",
+        "杜邦线在面包板里接触不良"
+      ],
+      "check": [
+        "断的时候板子是不是整个重启（灯全灭再亮）",
+        "轻轻碰一下线看会不会断"
+      ],
+      "fix": [
+        "功放 VIN 改接 5V（需要先短接背面 IN-OUT）",
+        "把可疑的杜邦线换掉，或换一个孔位"
+      ]
+    },
+    {
+      "id": "t11",
+      "symptom": "OLED 屏幕不亮",
+      "causes": [
+        "SDA / SCL 接反",
+        "VCC 没接到 3.3V",
+        "刷的固件没开屏幕"
+      ],
+      "check": [
+        "SDA 应该接 GPIO41，SCL 接 GPIO42",
+        "VCC 是不是 3.3V"
+      ],
+      "fix": [
+        "对调回来",
+        "屏幕不影响说话，先跑通语音也行"
+      ]
+    },
+    {
+      "id": "t12",
+      "symptom": "听不到 6 位验证码",
+      "causes": [
+        "喇叭本来就不响",
+        "固件板型选错了"
+      ],
+      "check": [
+        "先确认喇叭能出声（见 t05）",
+        "确认刷的是「面包板 WiFi」那个固件"
+      ],
+      "fix": [
+        "修好喇叭再听",
+        "重新刷 bread-compact-wifi"
+      ]
+    }
+  ],
+  "post_install": {
+    "title": "装完之后怎么用",
+    "items": [
+      "说「你好小智」唤醒，等它回应再说话",
+      "短按 BOOT 键可以打断它说话",
+      "想换唤醒词、换音色、换角色，去 xiaozhi.me 后台改",
+      "音量在后台或固件里调，面包板版没有音量按键",
+      "不用的时候拔 USB 就行，重新插上会自动重连 WiFi"
+    ]
+  }
+}

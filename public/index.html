@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>小智师傅 · 装机陪练</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">小</span>
+        <div class="brand-text">
+          <strong>小智师傅</strong>
+          <span id="specName">装机陪练</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="pill" id="statusPill"><i></i><span id="statusText">在线</span></div>
+        <button class="ghost" id="printBtn" title="打印接线卡（A4）">🖨 打印</button>
+        <button class="ghost" id="helpBtn" title="出问题了？查故障表">🩺 排障</button>
+        <button class="ghost" id="keyBtn" title="填 DeepSeek Key">🔑 Key</button>
+        <button class="ghost" id="voiceToggle" title="朗读">🔊 朗读</button>
+        <button class="ghost" id="newChatBtn">新对话</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="chat">
+        <div class="messages" id="messages" aria-live="polite"></div>
+
+        <div class="composer">
+          <button class="icon-btn" id="micBtn" title="按住说话">🎙</button>
+          <textarea id="input" rows="1" placeholder="打字，或者按麦克风说话…"></textarea>
+          <button class="icon-btn" id="photoBtn" title="拍一张给他看">📷</button>
+          <button class="send-btn" id="sendBtn" title="发送">↑</button>
+        </div>
+        <div class="hint" id="hint">Enter 发送 · Shift+Enter 换行 · 点麦克风说话（再点一下结束）· 卡住了就拍张照</div>
+      </section>
+
+      <section class="stage">
+        <canvas id="scene"></canvas>
+        <div class="vignette"></div>
+        <div class="annotations" id="annotations"></div>
+
+        <div class="stage-top">
+          <div class="seg" id="viewSeg">
+            <button data-view="iso" class="on">立体</button>
+            <button data-view="top">俯视</button>
+            <button data-view="front">正面</button>
+            <button data-view="left">左侧</button>
+          </div>
+          <button class="ghost small" id="resetView">重置</button>
+        </div>
+
+        <div class="stepcard" id="stepcard">
+          <div class="step-head">
+            <span class="step-no" id="stepNo">1 / 17</span>
+            <span class="step-title" id="stepTitle">准备好了吗</span>
+          </div>
+          <div class="step-goal" id="stepGoal">右边是这次要装的东西</div>
+          <ul class="step-do" id="stepDo"></ul>
+          <div class="step-check" id="stepCheck"></div>
+          <div class="step-nav">
+            <button class="ghost small" id="prevStep">← 上一步</button>
+            <button class="primary small" id="nextStep">下一步 →</button>
+          </div>
+        </div>
+
+        <div class="player" id="player">
+          <button class="pbtn" id="playBtn" title="播放 / 暂停">▶</button>
+          <button class="pbtn" id="replayBtn" title="从头重播">↺</button>
+          <input type="range" id="scrub" min="0" max="1000" value="1000" step="1" title="拖动查看过程" />
+          <div class="speeds" id="speeds">
+            <button data-speed="0.5">0.5×</button>
+            <button data-speed="1" class="on">1×</button>
+            <button data-speed="1.5">1.5×</button>
+            <button data-speed="2">2×</button>
+          </div>
+          <label class="autonext"><input type="checkbox" id="autoNext" /> 连播</label>
+        </div>
+
+        <div class="progressbar" id="progressbar"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <div class="dialog" id="keyDlg" hidden>
+    <div class="dialog-box">
+      <h3>填 DeepSeek Key</h3>
+      <p>这不是小智网页上的东西。是你这台电脑上的一把钥匙——有了它，AI 才能回话。</p>
+      <input id="keyInput" type="password" autocomplete="off" spellcheck="false" placeholder="sk-……" />
+      <div class="dialog-actions">
+        <button class="ghost" id="keyCancel">取消</button>
+        <button class="primary" id="keySave">保存</button>
+      </div>
+      <div class="dialog-msg" id="keyMsg"></div>
+    </div>
+  </div>
+
+  <div class="dialog" id="helpDlg" hidden>
+    <div class="dialog-box help">
+      <h3>出问题了？</h3>
+      <p>点一条最像你现在的情况，照着查。查完还不行，就把这一条发给我。</p>
+      <div class="help-list" id="helpList"></div>
+      <div class="help-post" id="helpPost"></div>
+      <div class="dialog-actions">
+        <button class="ghost" id="helpClose">关掉</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="lightbox" id="lightbox" hidden><img id="lightboxImg" alt="" /></div>
+  <input type="file" id="fileInput" accept="image/*" capture="environment" hidden />
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+# runtime data (conversations, screenshots, tts cache, captured screen)
+data/
+
+# local config with your API key
+config.json
+
+# generated dependencies
+vendor/
+stt/py311/
+stt/models/
+.setup/
+node_modules/
+
+# 例外：3D 用的 Three.js 要跟仓库走（离线可用）
+!public/vendor/
+
+# temp
+.tmp/
+*.log
+*.mp3
+*.wav
+
+# 调试用的截图/裁剪图（不是项目内容）
+_insp/
